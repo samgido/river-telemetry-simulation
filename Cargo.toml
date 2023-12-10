@@ -1,7 +1,9 @@
 [package]
-name = "dads-fish"
+name = "river-telemetry-simulation"
 version = "0.1.0"
 edition = "2021"
+author = ["Samuel Gido samuelgido@outlook.com"]
+homepage = "https://github.com//samgido//river-telemetry-simulation"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
