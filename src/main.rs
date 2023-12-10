@@ -28,7 +28,8 @@ fn main() {
     test_cases = read_num("How many times should the simulation run? ");
     let mut average_found: f32 = 0.0;
 
-    for _ in 0..test_cases {
+    for i in 0..test_cases {
+        println!("Running simulation #{}", i + 1);
         let found_count = simulate(
             read_radius,
             read_time,
@@ -37,11 +38,13 @@ fn main() {
             river_length,
         );
 
+        println!("Found {} fish", found_count);
+
         average_found += found_count as f32;
     }
 
     println!(
-        "Found {} of {} fish on average",
+        "\nOn average, {} of {} fish were found.\n",
         average_found / test_cases as f32,
         number_of_fish
     );
