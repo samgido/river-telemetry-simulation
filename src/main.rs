@@ -1,8 +1,11 @@
+use chrono;
 use rand::Rng;
 use std::{
     collections::HashMap,
-    io::{self, Write},
+    fs::File,
+    io::{self, BufWriter, Write},
     str::FromStr,
+    time::Instant,
 };
 
 struct Fish {
@@ -11,40 +14,95 @@ struct Fish {
 }
 
 fn main() {
-    let read_radius: f32;
-    let read_time: f32;
-    let number_of_fish: i32;
-    let float_speed: f32;
-    let river_length: f32;
+    let mut read_radius: f32;
+    let mut read_time: f32;
+    let mut number_of_fish: i32;
+    let mut float_speed: f32;
+    let mut river_length: f32;
 
-    let test_cases: i32;
+    let mut test_cases: i32;
 
-    read_radius = read_num("Enter the average read radius of the antenna (m): ");
-    read_time = read_num("Enter the read time for each frequency (s): ");
-    number_of_fish = read_num("Enter the number of fish: ");
-    float_speed = read_num("Enter the speed of the boat (m/s): ");
-    river_length = read_num("Enter the length of the river (m): ");
+    let mut repeat = true;
+    while repeat {
+        read_radius = read_num("Enter the average read radius of the antenna (m): ");
+        read_time = read_num("Enter the read time for each frequency (s): ");
+        number_of_fish = read_num("Enter the number of fish: ");
+        float_speed = read_num("Enter the speed of the boat (m/s): ");
+        river_length = read_num("Enter the length of the river (m): ");
 
-    test_cases = read_num("How many times should the simulation run? ");
-    let mut average_found: f32 = 0.0;
+        test_cases = read_num("How many times should the simulation run? ");
+        let mut average_found: f32 = 0.0;
 
-    for _ in 0..test_cases {
-        let found_count = simulate(
+        let now = Instant::now();
+
+        for i in 0..test_cases {
+            let found_count = simulate(
+                read_radius,
+                read_time,
+                number_of_fish,
+                float_speed,
+                river_length,
+            );
+
+            println!("Running simulation #{}", i + 1);
+            println!("Simulation #{} found {} fish", i + 1, found_count);
+
+            average_found += found_count as f32;
+        }
+        let time_elapsed = now.elapsed();
+        println!("The simulations finished in {:.3?} seconds", time_elapsed);
+
+        println!(
+            "\nOn average, {} of {} fish were found with these parameters.",
+            average_found / test_cases as f32,
+            number_of_fish
+        );
+
+        let algebraic_estimate = (2.0 * read_radius) / (float_speed * read_time);
+
+        if algebraic_estimate > number_of_fish as f32 {
+            println!("The algebraic estimate was {} fish.", number_of_fish);
+        } else {
+            println!("The algebraic estimate was {} fish.", algebraic_estimate);
+        }
+
+        print(
             read_radius,
             read_time,
             number_of_fish,
             float_speed,
             river_length,
+            average_found / test_cases as f32,
+            algebraic_estimate,
         );
 
-        average_found += found_count as f32;
-    }
+        print!("\nRun the program again? (y/n): ");
+        let _ = io::stdout().flush().expect("stdout flush failed.");
+        loop {
+            let mut repeat_string = String::new();
+            match io::stdin().read_line(&mut repeat_string) {
+                Ok(_) => {
+                    if repeat_string.trim() == "Y" || repeat_string.trim() == "y" {
+                        repeat = true;
+                        break;
+                    } else if repeat_string.trim() == "N" || repeat_string.trim() == "n" {
+                        repeat = false;
+                        break;
+                    } else {
+                        print!("Choose one of the options, (y/n): ");
+                        let _ = io::stdout().flush().expect("stdout flush failed.");
+                    }
+                }
+                Err(_) => {
+                    print!("Could not read input, try again:");
+                    let _ = io::stdout().flush().expect("stdout flush failed.");
+                    continue;
+                }
+            }
+        }
 
-    println!(
-        "Found {} of {} fish on average",
-        average_found / test_cases as f32,
-        number_of_fish
-    );
+        println!("\nSource code at github.com/samgido/river-telemetry-simulation");
+    }
 }
 
 fn simulate(
@@ -129,13 +187,72 @@ fn read_num<T: FromStr>(message: &str) -> T {
                 if let Ok(value) = line.trim().parse::<T>() {
                     return value;
                 } else {
-                    println!("Could not parse input, try again");
+                    print!("Could not parse input, try again: ");
+                    let _ = io::stdout().flush().expect("stdout flush failed.");
+                    line = String::new();
                 }
             }
             Err(_) => {
-                println!("Invalid input, try again");
+                print!("Invalid input, try again:");
+                let _ = io::stdout().flush().expect("stdout flush failed.");
+                line = String::new();
                 continue;
             }
         }
     }
 }
+
+fn print(
+    read_range: f32,
+    read_time: f32,
+    number_of_fish: i32,
+    float_speed: f32,
+    river_length: f32,
+    found: f32,
+    estimate: f32,
+) {
+    let mut filename = String::new();
+    let now = chrono::offset::Local::now();
+    filename += "logs/";
+    filename += &format!("{}", now.format("%I%M%S-%d%m%Y"));
+    filename += ".txt";
+
+    let file: File;
+
+    if let Ok(f) = File::create(filename) {
+        file = f;
+    } else {
+        println!("Couldn't create log.");
+        return;
+    }
+
+    let mut content: String = String::new();
+    content += "Read range: ";
+    content += read_range.to_string().as_str();
+    content += "\n";
+    content += "Read time: ";
+    content += read_time.to_string().as_str();
+    content += "\n";
+    content += "Number of fish: ";
+    content += number_of_fish.to_string().as_str();
+    content += "\n";
+    content += "Float speed: ";
+    content += float_speed.to_string().as_str();
+    content += "\n";
+    content += "River length: ";
+    content += river_length.to_string().as_str();
+    content += "\n";
+    content += "# of fish found by simulations: ";
+    content += found.to_string().as_str();
+    content += "\n";
+    content += "Algebraic estimate: ";
+    content += estimate.to_string().as_str();
+
+    let mut f = BufWriter::new(file);
+    f.write_all(content.as_bytes())
+        .expect("Unable to write to file");
+}
+
+// The Celestial Suite; Pale Jay
+// Patience; Tame Impala
+// 33; Insightful
