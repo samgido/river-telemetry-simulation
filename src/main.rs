@@ -1,11 +1,9 @@
 use chrono;
-use core::time;
 use rand::Rng;
 use std::{
     collections::HashMap,
     fs::File,
     io::{self, BufWriter, Write},
-    os::windows::thread,
     str::FromStr,
     time::Instant,
 };
@@ -80,12 +78,13 @@ fn main() {
 
         print!("\nRun the program again? (y/n): ");
         let _ = io::stdout().flush().expect("stdout flush failed.");
-        loop {
+        while repeat {
             let mut repeat_string = String::new();
             match io::stdin().read_line(&mut repeat_string) {
                 Ok(_) => {
                     if repeat_string.trim() == "Y" || repeat_string.trim() == "y" {
                         repeat = true;
+                        println!("\n");
                         break;
                     } else if repeat_string.trim() == "N" || repeat_string.trim() == "n" {
                         repeat = false;
@@ -103,9 +102,9 @@ fn main() {
             }
         }
 
-        let _ = io::stdout().flush().expect("stdout flush failed.");
-        println!("\nSource code at github.com/samgido/river-telemetry-simulation");
-        let _ = io::stdout().flush().expect("stdout flush failed.");
+        if !repeat {
+            println!("\nSource code at github.com/samgido/river-telemetry-simulation");
+        }
     }
 }
 
