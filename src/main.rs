@@ -1,9 +1,11 @@
 use chrono;
+use core::time;
 use rand::Rng;
 use std::{
     collections::HashMap,
     fs::File,
     io::{self, BufWriter, Write},
+    os::windows::thread,
     str::FromStr,
     time::Instant,
 };
@@ -101,7 +103,9 @@ fn main() {
             }
         }
 
+        let _ = io::stdout().flush().expect("stdout flush failed.");
         println!("\nSource code at github.com/samgido/river-telemetry-simulation");
+        let _ = io::stdout().flush().expect("stdout flush failed.");
     }
 }
 
