@@ -1,20 +1,13 @@
 use chrono;
-use rand::Rng;
 use std::{
-    collections::HashMap,
     fs::File,
     io::{self, BufWriter, Write},
     str::FromStr,
     time::Instant,
 };
 
-use crate::engine::Engine;
 pub mod engine;
-
-struct Fish {
-    pos: f32,
-    found: bool,
-}
+use crate::engine::Engine;
 
 fn main() {
     let mut read_radius: f32;
@@ -27,6 +20,7 @@ fn main() {
 
     let mut repeat = true;
     while repeat {
+        // collecting input
         read_radius = read_num("Enter the average read radius of the antenna (m): ");
         read_time = read_num("Enter the read time for each frequency (s): ");
         number_of_fish = read_num("Enter the number of fish: ");
@@ -34,8 +28,10 @@ fn main() {
         river_length = read_num("Enter the length of the river (m): ");
 
         test_cases = read_num("How many times should the simulation run? ");
+
+        // setting up engine
         let mut average_found: f32 = 0.0;
-        let engine = Engine::new(
+        let mut engine = Engine::new(
             read_radius,
             read_time,
             number_of_fish,
@@ -43,6 +39,7 @@ fn main() {
             river_length,
         );
 
+        // running simulations
         let now = Instant::now();
         for i in 0..test_cases {
             let found_count = engine.simulate();
@@ -55,7 +52,8 @@ fn main() {
         let time_elapsed = now.elapsed();
         println!("The simulations finished in {:.3?} seconds", time_elapsed);
 
-        let average_found = average_found / test_cases as f32;
+        // outputting results
+        let average_found = average_found / engine.times_ran as f32;
         println!(
             "\nOn average, {} of {} fish were found with these parameters.",
             average_found, number_of_fish
@@ -69,8 +67,10 @@ fn main() {
             println!("The algebraic estimate was {} fish.", algebraic_estimate);
         }
 
+        // logging findings to file
         print(engine, average_found);
 
+        // ask to repeat the program
         print!("\nRun the program again? (y/n): ");
         let _ = io::stdout().flush().expect("stdout flush failed.");
         while repeat {
@@ -131,6 +131,7 @@ fn read_num<T: FromStr>(message: &str) -> T {
     }
 }
 
+// the parameters and results of the engine to a log file
 fn print(engine: Engine, found: f32) {
     let mut filename = String::new();
     let now = chrono::offset::Local::now();
@@ -165,6 +166,10 @@ fn print(engine: Engine, found: f32) {
     content += "\n";
     content += "# of fish found by simulations: ";
     content += found.to_string().as_str();
+    content += "\n";
+    content += "# of simulations ran: ";
+    content += engine.times_ran.to_string().as_str();
+    content += "\n";
     content += "\n";
     content += "Algebraic estimate: ";
     content += engine.calculate_algebraic_estimate().to_string().as_str();

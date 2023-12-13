@@ -8,6 +8,7 @@ pub struct Engine {
     pub number_of_fish: i32,
     pub float_speed: f32,
     pub river_length: f32,
+    pub times_ran: i32,
 }
 
 impl Engine {
@@ -24,6 +25,7 @@ impl Engine {
             number_of_fish,
             float_speed,
             river_length,
+            times_ran: 0,
         }
     }
 
@@ -31,7 +33,7 @@ impl Engine {
         (2.0 * self.read_radius) / (self.float_speed * self.read_time)
     }
 
-    pub fn simulate(&self) -> i32 {
+    pub fn simulate(&mut self) -> i32 {
         let mut rng = rand::thread_rng();
 
         let mut fish_collection: HashMap<i32, Fish> = HashMap::new();
@@ -84,6 +86,7 @@ impl Engine {
             }
         }
 
+        self.times_ran += 1;
         return found_count;
     }
 }
@@ -108,6 +111,7 @@ mod tests {
                 number_of_fish: 30,
                 float_speed: 1.3,
                 river_length: 100000.0,
+                times_ran: 0
             }
         );
     }
@@ -123,6 +127,7 @@ mod tests {
                 number_of_fish: 30,
                 float_speed: 1.3,
                 river_length: 100000.0,
+                times_ran: 0,
             }
         );
     }
@@ -145,7 +150,7 @@ mod tests {
 
     #[test]
     fn simulate_test_ok() {
-        let engine = Engine::new(75.0, 3.0, 30, 1.3, 100000.0);
+        let mut engine = Engine::new(75.0, 3.0, 30, 1.3, 100000.0);
         let result = engine.simulate();
 
         assert_eq!(result, 30);

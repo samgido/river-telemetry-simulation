@@ -10,3 +10,4 @@ homepage = "https://github.com//samgido//river-telemetry-simulation"
 [dependencies]
 chrono = "0.4.31"
 rand = "0.8.5"
+# 
