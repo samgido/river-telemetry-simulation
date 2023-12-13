@@ -8,6 +8,9 @@ use std::{
     time::Instant,
 };
 
+use crate::engine::Engine;
+pub mod engine;
+
 struct Fish {
     pos: f32,
     found: bool,
@@ -32,17 +35,17 @@ fn main() {
 
         test_cases = read_num("How many times should the simulation run? ");
         let mut average_found: f32 = 0.0;
+        let engine = Engine::new(
+            read_radius,
+            read_time,
+            number_of_fish,
+            float_speed,
+            river_length,
+        );
 
         let now = Instant::now();
-
         for i in 0..test_cases {
-            let found_count = simulate(
-                read_radius,
-                read_time,
-                number_of_fish,
-                float_speed,
-                river_length,
-            );
+            let found_count = engine.simulate();
 
             println!("Running simulation #{}", i + 1);
             println!("Simulation #{} found {} fish", i + 1, found_count);
@@ -52,13 +55,13 @@ fn main() {
         let time_elapsed = now.elapsed();
         println!("The simulations finished in {:.3?} seconds", time_elapsed);
 
+        let average_found = average_found / test_cases as f32;
         println!(
             "\nOn average, {} of {} fish were found with these parameters.",
-            average_found / test_cases as f32,
-            number_of_fish
+            average_found, number_of_fish
         );
 
-        let algebraic_estimate = (2.0 * read_radius) / (float_speed * read_time);
+        let algebraic_estimate = engine.calculate_algebraic_estimate();
 
         if algebraic_estimate > number_of_fish as f32 {
             println!("The algebraic estimate was {} fish.", number_of_fish);
@@ -66,15 +69,7 @@ fn main() {
             println!("The algebraic estimate was {} fish.", algebraic_estimate);
         }
 
-        print(
-            read_radius,
-            read_time,
-            number_of_fish,
-            float_speed,
-            river_length,
-            average_found / test_cases as f32,
-            algebraic_estimate,
-        );
+        print(engine, average_found);
 
         print!("\nRun the program again? (y/n): ");
         let _ = io::stdout().flush().expect("stdout flush failed.");
@@ -108,75 +103,6 @@ fn main() {
     }
 }
 
-fn simulate(
-    read_range: f32,
-    read_time: f32,
-    number_of_fish: i32,
-    float_speed: f32,
-    river_length: f32,
-) -> i32 {
-    // random number generator
-    let mut rng = rand::thread_rng();
-
-    // maps each fish id to the fishes position and state
-    let mut fish_collection: HashMap<i32, Fish> = HashMap::new();
-
-    // how many fish are found
-    let mut found_count: i32 = 0;
-
-    let mut current_frequency = 0;
-    let mut timer: f32 = 0.0;
-
-    // add a new fish to the hashmap with a random position and unique id
-    for i in 0..number_of_fish {
-        let random_fish = Fish {
-            pos: rng.gen::<f32>() * river_length,
-            found: false,
-        };
-
-        fish_collection.insert(i, random_fish);
-    }
-
-    // simulate readings for each second
-    for i in 0..(river_length / float_speed) as i32 {
-        // cycling the current frequency
-        if timer >= read_time {
-            if current_frequency >= number_of_fish - 1 {
-                current_frequency = 0;
-            } else {
-                current_frequency += 1;
-            }
-
-            timer = 0.0;
-        }
-
-        // calculate the boats position
-        let boat_pos = i as f32 * float_speed;
-
-        // checking if the fish that's being listened for is in range
-        match fish_collection.get_mut(&current_frequency) {
-            Some(fish) => {
-                if (fish.pos - boat_pos).abs() <= read_range {
-                    fish.found = true;
-                }
-            }
-            None => panic!("A fish escaped!"),
-        }
-
-        // updating the timer variable after data is taken
-        timer += 1.0;
-    }
-
-    // figure how many fish were found
-    for (_, v) in fish_collection.iter() {
-        if v.found {
-            found_count += 1;
-        }
-    }
-
-    return found_count;
-}
-
 // reads a number from the command line
 fn read_num<T: FromStr>(message: &str) -> T {
     let mut line = String::new();
@@ -205,15 +131,7 @@ fn read_num<T: FromStr>(message: &str) -> T {
     }
 }
 
-fn print(
-    read_range: f32,
-    read_time: f32,
-    number_of_fish: i32,
-    float_speed: f32,
-    river_length: f32,
-    found: f32,
-    estimate: f32,
-) {
+fn print(engine: Engine, found: f32) {
     let mut filename = String::new();
     let now = chrono::offset::Local::now();
     filename += "logs/";
@@ -231,25 +149,25 @@ fn print(
 
     let mut content: String = String::new();
     content += "Read range: ";
-    content += read_range.to_string().as_str();
+    content += engine.read_radius.to_string().as_str();
     content += "\n";
     content += "Read time: ";
-    content += read_time.to_string().as_str();
+    content += engine.read_time.to_string().as_str();
     content += "\n";
     content += "Number of fish: ";
-    content += number_of_fish.to_string().as_str();
+    content += engine.number_of_fish.to_string().as_str();
     content += "\n";
     content += "Float speed: ";
-    content += float_speed.to_string().as_str();
+    content += engine.float_speed.to_string().as_str();
     content += "\n";
     content += "River length: ";
-    content += river_length.to_string().as_str();
+    content += engine.river_length.to_string().as_str();
     content += "\n";
     content += "# of fish found by simulations: ";
     content += found.to_string().as_str();
     content += "\n";
     content += "Algebraic estimate: ";
-    content += estimate.to_string().as_str();
+    content += engine.calculate_algebraic_estimate().to_string().as_str();
 
     let mut f = BufWriter::new(file);
     f.write_all(content.as_bytes())
