@@ -1,21 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"math"
 	"math/rand"
-	"os"
+	"time"
 )
-
-type SimulationOptions struct {
-	ReadRange   float32
-	ReadTime    float32
-	FishCount   int
-	FloatSpeed  float32
-	RiverLength float32
-	TimesRan    int
-}
 
 type Fish struct {
 	position float32
@@ -26,19 +15,6 @@ func check(e error) {
 	if e != nil {
 		panic(e)
 	}
-}
-
-func read_options() SimulationOptions {
-	file, err := os.ReadFile("options.json")
-	check(err)
-
-	var options SimulationOptions
-	err = json.Unmarshal(file, &options)
-	check(err)
-
-	fmt.Println(options)
-
-	return options
 }
 
 func simulate(options SimulationOptions) int {
@@ -77,8 +53,6 @@ func simulate(options SimulationOptions) int {
 		if math.Abs(float64(distance)) <= float64(options.ReadRange) {
 			fish.is_found = true
 			fishes[i] = fish // Update the value of the fish in the map
-
-			fmt.Println("Found fish ", distance, " meters away")
 		}
 	}
 
@@ -102,8 +76,19 @@ func average_simulations(options SimulationOptions) float32 {
 	return average_found / float32(options.TimesRan)
 }
 
+func algebraic_estimate(options SimulationOptions) float32 {
+	return (2 * options.ReadRange) / (options.FloatSpeed * options.ReadTime)
+}
+
 func main() {
 	var options SimulationOptions
 	options = read_options()
-	fmt.Println(average_simulations(options))
+
+	start := time.Now()
+	simulation_results := average_simulations(options)
+	duration := time.Since(start)
+
+	algebraic_estimate := algebraic_estimate(options)
+
+	print_simulation_results(algebraic_estimate, simulation_results, float32(duration))
 }
