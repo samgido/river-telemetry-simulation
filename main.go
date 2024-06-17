@@ -90,5 +90,5 @@ func main() {
 	simulation_results, duration := average_simulations(options)
 	algebraic_estimate := algebraic_estimate(options)
 
-	print_simulation_results(algebraic_estimate, simulation_results, duration)
+	output_results(options, algebraic_estimate, simulation_results, duration)
 }

@@ -23,7 +23,5 @@ func read_options() SimulationOptions {
 	err = toml.Unmarshal(file, &options)
 	check(err)
 
-	print_options(options)
-
 	return options
 }
