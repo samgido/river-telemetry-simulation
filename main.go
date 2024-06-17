@@ -66,14 +66,18 @@ func simulate(options SimulationOptions) int {
 	return found_count
 }
 
-func average_simulations(options SimulationOptions) float32 {
+func average_simulations(options SimulationOptions) (float32, float32) {
+	// start 'timer'
+	start := time.Now()
 	var average_found float32 = 0
 
 	for i := 0; i < options.TimesRan; i++ {
 		average_found += float32(simulate(options))
 	}
 
-	return average_found / float32(options.TimesRan)
+	average_found = average_found / float32(options.TimesRan)
+
+	return average_found, float32(time.Since(start).Seconds())
 }
 
 func algebraic_estimate(options SimulationOptions) float32 {
@@ -81,14 +85,10 @@ func algebraic_estimate(options SimulationOptions) float32 {
 }
 
 func main() {
-	var options SimulationOptions
-	options = read_options()
+	options := read_options()
 
-	start := time.Now()
-	simulation_results := average_simulations(options)
-	duration := time.Since(start)
-
+	simulation_results, duration := average_simulations(options)
 	algebraic_estimate := algebraic_estimate(options)
 
-	print_simulation_results(algebraic_estimate, simulation_results, float32(duration))
+	print_simulation_results(algebraic_estimate, simulation_results, duration)
 }
