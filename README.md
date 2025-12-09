@@ -1,4 +1,3 @@
-# How to use
+# River Telemetry Simulation
 
-1. Edit only the values in the "options.toml" file to edit the parameters of the program
-2. Double click the run.bat file 
+Open the python notebook in Google Colab [here](https://colab.research.google.com/github/samgido/river-telemetry-simulation/blob/main/notebook.ipynb)
