@@ -1,0 +1,17 @@
+# Reading radius in meters
+ReadRange = 100
+
+# How long the scanner spends reading each frequency
+ReadTime = 5
+
+# How many fish will be randomly placed
+FishCount = 100
+
+# The speed of the raft
+FloatSpeed = 2
+
+# Length of the river
+RiverLength = 100
+
+# How many times the simulation runs
+TimesRan = 5
